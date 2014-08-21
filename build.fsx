@@ -152,7 +152,7 @@ let withEntityFramework = withCustomParams(fun p ->
 let createNuGetPackage (project:Project) (customParams: (NuGetParams -> NuGetParams) option) = 
     let packagingDir = (packagingRoot @@ project.name @@ "/");
     let net45Dir =  (packagingDir @@ "lib/net45")
-    let buildDir = ("./" @@ project.name @@ "/bin")
+    let buildDir = ("./src/" @@ project.name @@ "/bin")
     let publishUrl = getBuildParamOrDefault "publishurl" (environVarOrDefault "publishurl" "")
     let apiKey = getBuildParamOrDefault "apikey" (environVarOrDefault "apikey" "")
 
