@@ -4,102 +4,28 @@ open Fake
 open System
 open Fake.AssemblyInfoFile
 
-RestorePackages()
+//RestorePackages()
 
 type Project = { name: string;  authors: List<string>; description: string; summary: string; tags: string}
 let authors = ["Craig Smitham"]
 
 
 // The project name should be the same as the project directory
-let activityStreams = { 
-    name = "SocialSmith.ActivityStreams"; 
+let socialSmith = { 
+    name = "SocialSmith"; 
     authors = authors; 
     summary = "";
-    description = "Activity Streams";
+    description ="Toolkit for adding social features to your ASP.NET app.";
     tags = "" }
 
-let activityStreamsEF = { 
-    name = "SocialSmith.ActivityStreams.EntityFramework"; 
+let socialSmithSqlServer = { 
+    name = "SocialSmith.SqlServer"; 
     authors = authors; 
-    summary = "";
-    description = "Entity Framework store for Activity Streams";
+    summary = "SQL Server/Entity Framework";
+    description = "SQL Server/Entity Framework persistence for SocialSmith";
     tags = "" }
 
-let blogs = {
-    name = "SocialSmith.Blogs";
-    authors = authors;
-    summary = "";
-    description = "SocialSmith Blogs";
-    tags = "" }
-
-let blogsEF ={
-    name = "SocialSmith.Blogs.EntityFramework";
-    authors = authors;
-    summary = "";
-    description = "Entity Framework for SocialSmith Blogs";
-    tags = "" }
-
-let comments = {
-    name = "SocialSmith.Comments";
-    authors = authors;
-    summary = "";
-    description = "SocialSmith Comments";
-    tags = "" 
-}
-
-let commentsEF = {
-    name = "SocialSmith.Comments.EntityFramework";
-    authors = authors;
-    summary = "";
-    description = "Entity Framework extension for SocialSmith Comments";
-    tags = "" 
-}
-
-let groups = {
-    name = "SocialSmith.Groups";
-    authors = authors;
-    summary = "";
-    description = "SocialSmith Groups";
-    tags = "" 
-}
-
-let groupsEF = {
-    name = "SocialSmith.Groups.EntityFramework";
-    authors = authors;
-    summary = "";
-    description = "Entity Framework extension for SocialSmith Groups";
-    tags = "" 
-}
-
-let profiles = {
-    name = "SocialSmith.Profiles";
-    authors = authors;
-    summary = "";
-    description = "SocialSmith Profiles";
-    tags = "" 
-}
-
-
-let profilesEF = {
-    name = "SocialSmith.Profiles.EntityFramework";
-    authors = authors;
-    summary = "";
-    description = "Entity Framework extension for SocialSmith Profiles";
-    tags = "" 
-}
-
-
-let projects = [ 
-    activityStreams; 
-    activityStreamsEF; 
-    blogs; 
-    blogsEF; 
-    comments; 
-    commentsEF; 
-    groups; 
-    groupsEF; 
-    profiles; 
-    profilesEF ]
+let projects = [ socialSmith; socialSmithSqlServer ]
 
 let buildMode = getBuildParamOrDefault "buildMode" "Release"
 let testResultsDir = "./testresults"
@@ -108,18 +34,18 @@ let packagingRoot = "./packaging/"
 let projectBins =  projects |> List.map(fun p -> "./src/" @@ p.name @@ "/bin")
 let projectPackagingDirs =  projects |> List.map(fun p -> packagingRoot @@ p.name)
 
-let buildNumber = environVarOrDefault "APPVEYOR_BUILD_NUMBER" "0"
+let buildNumber = getBuildParamOrDefault "buildNumber" (environVarOrDefault "APPVEYOR_BUILD_NUMBER" "0")
 // APPVEYOR_BUILD_VERSION:  MAJOR.MINOR.PATCH.BUILD_NUMBER
-let buildVersion = environVarOrDefault "APPVEYOR_BUILD_VERSION" "0.0.0.0"
+let buildVersion = getBuildParamOrDefault "buildVersion" (environVarOrDefault "APPVEYOR_BUILD_VERSION" "0.0.0.0")
 let majorMinorPatch = split '.' buildVersion  |> Seq.take(3) |> Seq.toArray |> (fun versions -> String.Join(".", versions))
 let assemblyVersion = majorMinorPatch
 let assemblyFileVersion = buildVersion
 let preReleaseVersion = getBuildParamOrDefault "prerelease" ("-ci" + buildNumber)
 let isMajorRelease = getBuildParam "release" <> ""
 let packageVersion = 
-    match isMajorRelease with
-    | true -> majorMinorPatch
-    | false -> majorMinorPatch + preReleaseVersion
+        match isMajorRelease with
+        | true -> majorMinorPatch
+        | false -> majorMinorPatch + preReleaseVersion
     
 
 // Targets
@@ -179,44 +105,12 @@ let createNuGetPackage (project:Project) (customParams: (NuGetParams -> NuGetPar
                 | None -> (fun p -> p))) "./base.nuspec"
 
 
-Target "CreateActivityStreamsPackage" (fun _ -> 
-    createNuGetPackage activityStreams useDefaults
+Target "CreateCorePackage" (fun _ -> 
+    createNuGetPackage socialSmith useDefaults
 )
 
-Target "CreateActivityStreamsEntityFrameworkPackage" (fun _ -> 
-    createNuGetPackage activityStreamsEF withEntityFramework    
-)
-
-Target "CreateBlogsPackage" (fun _ -> 
-    createNuGetPackage blogs useDefaults
-)
-
-Target "CreateBlogsEntityFrameworkPackage" (fun _ -> 
-    createNuGetPackage blogsEF withEntityFramework
-)
-
-Target "CreateCommentsPackage" (fun _ -> 
-    createNuGetPackage comments useDefaults
-)
-
-Target "CreateCommentsEntityFrameworkPackage" (fun _ -> 
-    createNuGetPackage commentsEF withEntityFramework
-)
-
-Target "CreateGroupsPackage" (fun _ -> 
-    createNuGetPackage groups useDefaults
-)
-
-Target "CreateGroupsEntityFrameworkPackage" (fun _ -> 
-    createNuGetPackage groupsEF withEntityFramework
-)
-
-Target "CreateProfilesPackage" (fun _ -> 
-    createNuGetPackage profiles useDefaults
-)
-
-Target "CreateProfilesEntityFrameworkPackage" (fun _ -> 
-    createNuGetPackage profilesEF withEntityFramework
+Target "CreateSqlServerPackage" (fun _ -> 
+    createNuGetPackage socialSmithSqlServer withEntityFramework    
 )
 
 
@@ -229,43 +123,11 @@ Target "Default" DoNothing
         ==> "BuildApp"
 
 "BuildApp" 
-    ==>"CreateActivityStreamsPackage"
+    ==>"CreateSqlServerPackage"
         ==> "CreatePackages"
 
 "BuildApp" 
-    ==>"CreateActivityStreamsEntityFrameworkPackage"
-        ==> "CreatePackages"
-
-"BuildApp" 
-    ==>"CreateBlogsPackage"
-        ==> "CreatePackages"
-
-"BuildApp" 
-    ==>"CreateBlogsEntityFrameworkPackage"
-        ==> "CreatePackages"
-
-"BuildApp" 
-    ==>"CreateCommentsPackage"
-        ==> "CreatePackages"
-
-"BuildApp" 
-    ==>"CreateCommentsEntityFrameworkPackage"
-        ==> "CreatePackages"
-
-"BuildApp" 
-    ==>"CreateGroupsPackage"
-        ==> "CreatePackages"
-
-"BuildApp" 
-    ==>"CreateGroupsEntityFrameworkPackage"
-        ==> "CreatePackages"
-
-"BuildApp" 
-    ==>"CreateProfilesPackage"
-        ==> "CreatePackages"
-
-"BuildApp" 
-    ==>"CreateProfilesEntityFrameworkPackage"
+    ==>"CreateCorePackage"
         ==> "CreatePackages"
 
 
