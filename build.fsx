@@ -4,7 +4,7 @@ open Fake
 open System
 open Fake.AssemblyInfoFile
 
-//RestorePackages()
+RestorePackages()
 
 type Project = { name: string;  authors: List<string>; description: string; summary: string; tags: string}
 let authors = ["Craig Smitham"]
